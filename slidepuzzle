@@ -1,0 +1,241 @@
+// Slide Puzzle
+// Assignment 02
+
+#pragma warning(disable:6031)
+
+// Includes
+#include <iostream>
+#include <iomanip>
+#include <conio.h>
+#include <string.h>
+#include <windows.h>
+using namespace std;
+
+// Defines
+#define NUM_ROWS		3
+#define NUM_COLS		3
+
+#define BLANK			9
+
+#define SLIDE_UP		1
+#define SLIDE_DOWN		2
+#define SLIDE_LEFT		3
+#define SLIDE_RIGHT		4
+
+#define COLOR_DEFAULT	7
+#define COLOR_RED		12
+#define COLOR_GREEN		10
+
+// Prototypes
+void InitializeBoard(int[NUM_ROWS][NUM_COLS]);
+void PrintBoard(int[NUM_ROWS][NUM_COLS], HANDLE);
+bool IsBoardSolved(int[NUM_ROWS][NUM_COLS]);
+bool SlideTile(int[NUM_ROWS][NUM_COLS], int);
+void ScrambleBoard(int[NUM_ROWS][NUM_COLS]);
+void cls(HANDLE);
+
+
+int main() {
+	// Seed the RNG
+	srand((unsigned int)time(NULL));
+
+	HANDLE currentConsole;
+	currentConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	// Declare variables
+	int slidingBoard[NUM_ROWS][NUM_COLS];
+	char move = ' ';
+
+	InitializeBoard(slidingBoard);
+	PrintBoard(slidingBoard, currentConsole);
+	IsBoardSolved(slidingBoard);
+
+	cout << "Press any key to begin...";
+	_getch();
+
+	ScrambleBoard(slidingBoard);
+	IsBoardSolved(slidingBoard);
+
+	for (;; ) {
+		HANDLE currentConsoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+		cls(currentConsoleHandle);
+
+		PrintBoard(slidingBoard, currentConsole);
+		IsBoardSolved(slidingBoard);
+
+		cout << "(W -> UP  |  A -> LEFT  |  S -> DOWN  |  D -> RIGHT)" << endl;
+		cout << "Which Way to Slide: ";
+		move = _getche();
+		if (move == 'W' || move == 'w') {
+			SlideTile(slidingBoard, SLIDE_UP);
+		}
+		if (move == 'A' || move == 'a') {
+			SlideTile(slidingBoard, SLIDE_LEFT);
+		}
+		if (move == 'S' || move == 's') {
+			SlideTile(slidingBoard, SLIDE_DOWN);
+		}
+		if (move == 'D' || move == 'd') {
+			SlideTile(slidingBoard, SLIDE_RIGHT);
+		}
+		
+	}
+
+	_getch();
+	return 0;
+}
+
+// Function Definitions
+
+void InitializeBoard(int theBoard[NUM_ROWS][NUM_COLS]) {
+	int count = 1;
+
+	for (int i = 0; i < NUM_ROWS; i++) {
+		for (int j = 0; j < NUM_COLS; j++) {
+			theBoard[i][j] = count;
+			count++;
+		}
+	}
+}
+
+void PrintBoard(int theBoard[NUM_ROWS][NUM_COLS], HANDLE changeMe) {
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), COLOR_GREEN);
+	for (int i = 0; i < NUM_ROWS; i++) {
+		for (int j = 0; j < NUM_COLS; j++) {
+			if (theBoard[i][j] < NUM_ROWS * NUM_COLS) {
+				cout << setw(3) << theBoard[i][j];
+			}
+			else {
+				cout << setw(3) << '*';
+			}
+		}
+		cout << endl;
+	}
+}
+
+bool IsBoardSolved(int theBoard[NUM_ROWS][NUM_COLS]) {
+	int count = 1;
+	for (int i = 0; i < NUM_ROWS; i++) {
+		for (int j = 0; j < NUM_COLS; j++) {
+			if (theBoard[i][j] != count) {
+				cout << "The puzzle is not solved." << endl << endl;
+				return FALSE;
+			}
+			
+			else {
+				count++;
+			}
+		}
+	}
+	cout << "The puzzle is solved" << endl << endl;
+	return TRUE;
+}
+
+bool SlideTile(int theBoard[NUM_ROWS][NUM_COLS], int move) {
+	switch (move) {
+	case SLIDE_UP:
+		for (int i = 0; i < NUM_ROWS; i++) {
+			for (int j = 0; j < NUM_COLS; j++) {
+				if (theBoard[i][j] == BLANK) {
+					if (i == 2) {
+						return FALSE;
+					}
+
+					theBoard[i][j] = theBoard[i + 1][j];
+					theBoard[i + 1][j] = BLANK;
+					return TRUE;
+				}
+			}
+		}
+		return TRUE;
+
+	case SLIDE_DOWN:
+		for (int i = 0; i < NUM_ROWS; i++) {
+			for (int j = 0; j < NUM_COLS; j++) {
+				if (theBoard[i][j] == BLANK) {
+					if (i == 0) {
+						return FALSE;
+					}
+					theBoard[i][j] = theBoard[i - 1][j];
+					theBoard[i - 1][j] = BLANK;
+					return TRUE;
+				}
+			}
+		}
+		return TRUE;
+
+	case SLIDE_LEFT:
+		for (int i = 0; i < NUM_ROWS; i++) {
+			for (int j = 0; j < NUM_COLS; j++) {
+				if (theBoard[i][j] == BLANK) {
+					if (j == 2) {
+						return FALSE;
+					}
+					theBoard[i][j] = theBoard[i][j + 1];
+					theBoard[i][j + 1] = BLANK;
+					return TRUE;
+				}
+			}
+		}
+		return TRUE;
+	case SLIDE_RIGHT:
+		for (int i = 0; i < NUM_ROWS; i++) {
+			for (int j = 0; j < NUM_COLS; j++) {
+				if (theBoard[i][j] == BLANK) {
+					if (j == 0) {
+						return FALSE;
+					}
+					theBoard[i][j] = theBoard[i][j - 1];
+					theBoard[i][j - 1] = BLANK;
+					return TRUE;
+				}
+			}
+		}
+		return TRUE;
+	
+	default:
+		return TRUE;
+
+	}
+}
+
+void ScrambleBoard(int theBoard[NUM_ROWS][NUM_COLS]) {
+	cout << endl << endl << "Scrambling the tiles..." << endl;
+
+	for (int i = 0; i < 10000; i++) {
+		SlideTile(theBoard, rand() % 4 + 1);
+	}
+
+	cout << "Scrambling complete, press any key to begin solving." << endl;
+	_getch();
+}
+
+void cls(HANDLE hConsole)
+{
+	COORD coordScreen = { 0, 0 };    /* here's where we'll home the
+									 cursor */
+	BOOL bSuccess;
+	DWORD cCharsWritten;
+	CONSOLE_SCREEN_BUFFER_INFO csbi; /* to get buffer info */
+	DWORD dwConSize;                 /* number of character cells in
+									 the current buffer */
+
+									 /* get the number of character cells in the current buffer */
+
+	bSuccess = GetConsoleScreenBufferInfo(hConsole, &csbi);
+	dwConSize = csbi.dwSize.X * csbi.dwSize.Y;
+
+	/* fill the entire screen with blanks */
+	bSuccess = FillConsoleOutputCharacter(hConsole, (TCHAR)' ',
+		dwConSize, coordScreen, &cCharsWritten);
+
+	/* get the current text attribute */
+	bSuccess = GetConsoleScreenBufferInfo(hConsole, &csbi);
+
+	/* now set the buffer's attributes accordingly */
+	bSuccess = FillConsoleOutputAttribute(hConsole, csbi.wAttributes,
+		dwConSize, coordScreen, &cCharsWritten);
+
+	/* put the cursor at (0, 0) */
+	bSuccess = SetConsoleCursorPosition(hConsole, coordScreen);
+}
